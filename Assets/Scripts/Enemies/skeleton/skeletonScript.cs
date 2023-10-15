@@ -105,8 +105,17 @@ public class skeletonScript : MonoBehaviour
         {
             rb.velocity = Vector2.zero;
             currentState = State.Attack;
-            animator.SetTrigger("Attack");
-            //Time.timeScale = 0.2f;
+            float randomAttack = UnityEngine.Random.Range(0f, 1f);
+            if (randomAttack < 0.7f)
+            {
+                Debug.Log("Attack");
+                animator.SetTrigger("Attack");
+            }
+            else
+            {
+                Debug.Log("Attack2");
+                animator.SetTrigger("Attack2");
+            }
             StartCoroutine(ResetAttack());
         }
 
