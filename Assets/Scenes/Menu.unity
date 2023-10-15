@@ -364,6 +364,14 @@ PrefabInstance:
       propertyPath: GameOver
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 6549643674033646449, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1115568262}
+    - target: {fileID: 6549643674033646449, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Exit
+      objectReference: {fileID: 0}
     - target: {fileID: 8195995896699431293, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -390,11 +398,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8195995896699431293, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 800
+      value: 1025.2231
       objectReference: {fileID: 0}
     - target: {fileID: 8195995896699431293, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 450.2732
+      value: 577.0381
       objectReference: {fileID: 0}
     - target: {fileID: 8195995896699431293, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
       propertyPath: m_LocalScale.x
@@ -438,11 +446,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8195995896699431293, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 366
+      value: 469.03958
       objectReference: {fileID: 0}
     - target: {fileID: 8195995896699431293, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 205.99998
+      value: 263.99493
       objectReference: {fileID: 0}
     - target: {fileID: 8195995896699431293, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -456,7 +464,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4753586429227538981, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
     m_RemovedGameObjects:
     - {fileID: 8506419984992757555, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}
     - {fileID: 2859027688004309169, guid: 227633e6f2ee02e4db3174168eab6739, type: 3}

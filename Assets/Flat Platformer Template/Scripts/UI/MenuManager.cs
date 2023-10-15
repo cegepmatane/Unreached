@@ -10,10 +10,24 @@ public class MenuManager : MonoBehaviour
     public HUD HUD;
     public MenuPause Pause;
     public MenuGameOver GameOver;
-    public Menu Menu;
 
     private void Awake()
     {
         Instance = this;
+    }
+
+    public void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (Pause.gameObject.activeSelf)
+            {
+                Pause.gameObject.SetActive(false);
+            }
+            else
+            {
+                Pause.gameObject.SetActive(true);
+            }
+        }
     }
 }
