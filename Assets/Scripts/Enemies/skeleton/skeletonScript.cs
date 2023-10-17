@@ -41,15 +41,15 @@ public class skeletonScript : MonoBehaviour
         // Health based on scale
         health = (int)(health * randomScale);
 
-        // Randomize the speed by 20%
-        float randomSpeed = UnityEngine.Random.Range(0.8f, 1.2f);
+        // Speed inversely proportional to scale
+        float randomSpeed = 1 / randomScale;
         speed = (int)(speed * randomSpeed);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (currentState == State.Dead || currentState == State.Stuned || currentState == State.Attack)
+        if (currentState == State.Dead || currentState == State.Stuned || currentState == State.Attack || Time.timeScale < 1)
         {
             return;
         }

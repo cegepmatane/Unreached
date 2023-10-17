@@ -49,6 +49,10 @@ public class PlayerController : MonoBehaviour
     private Transform m_FeetPos, m_HeadSlidePos, m_WallRideR, m_CeilingRideU;
     [SerializeField]
     private LayerMask m_GroundLayer;
+    [SerializeField]
+    private GameObject m_GameOverScren;
+    [SerializeField]
+    private GameObject m_StatusManager;
 
     private void Awake()
     {
@@ -169,7 +173,7 @@ public class PlayerController : MonoBehaviour
         if (!m_IsSliding && !m_IsAttacking && m_IsGrounded)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (RunSpeed), m_Rigidbody2D.velocity.y);
             //m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
-        else if (!m_IsSliding && m_IsAttacking)
+        else if (!m_IsSliding && m_IsAttacking && m_IsGrounded)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (WalkSpeed), m_Rigidbody2D.velocity.y);
         else if (!m_IsSliding && !m_IsAttacking && !m_IsGrounded)
             m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
@@ -353,11 +357,15 @@ public class PlayerController : MonoBehaviour
         {
             m_Animator.SetBool("IsDead", true);
             Time.timeScale = 0.33f;
+            m_GameOverScren.SetActive(true);
             this.gameObject.GetComponent<PlayerController>().enabled = false;
+            m_StatusManager.GetComponent<StatusManager>().setHealth(0);
+            
         }
         else
         {
             m_Animator.SetTrigger("TakeDamage");
+            m_StatusManager.GetComponent<StatusManager>().setHealth(Health);
         }
     }
 }

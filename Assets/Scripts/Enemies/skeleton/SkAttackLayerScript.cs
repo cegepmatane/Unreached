@@ -10,7 +10,7 @@ public class SkAttackLayerScript : MonoBehaviour
         if (col.gameObject.tag == "Player")
         {
             Debug.Log("Player takes damage");
-            col.gameObject?.GetComponent<PlayerController>()?.TakeDamage(1);
+            col.gameObject?.GetComponent<PlayerController>()?.TakeDamage(20);
         }
     }
 }
