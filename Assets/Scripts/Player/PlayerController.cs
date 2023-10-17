@@ -26,6 +26,7 @@ public class PlayerController : MonoBehaviour
     public float AttackFallSpeed = 0.2f;
 
     public GameObject MagicalStarPrefab;
+    public GameObject PlayerBlur;
 
     private bool m_UserJump = false;
     private bool m_UserMagicalAbility = false;
@@ -151,6 +152,8 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        MotionBlur();
+
         //Debug.Log("RunSpeed: " + RunSpeed);
         //Debug.Log("Velocity: " + m_Rigidbody2D.velocity.x);
 
@@ -367,5 +370,20 @@ public class PlayerController : MonoBehaviour
             m_Animator.SetTrigger("TakeDamage");
             m_StatusManager.GetComponent<StatusManager>().setHealth(Health);
         }
+    }
+
+    public void MotionBlur()
+    {
+        // Each frame, we get the current sprite of the player
+        SpriteRenderer t_SpriteRenderer = this.gameObject.GetComponent<SpriteRenderer>();
+        // We summon a prefab "PlayerBlur" and we set it's sprite to the current sprite of the player
+        GameObject t_PlayerBlur = Instantiate(PlayerBlur, transform.position, Quaternion.identity);
+        t_PlayerBlur.GetComponent<SpriteRenderer>().sprite = t_SpriteRenderer.sprite;
+        // We spawn it on the player position
+        t_PlayerBlur.transform.position = transform.position;
+        // We give it the same scale as the player
+        t_PlayerBlur.transform.localScale = transform.localScale;
+        // Move it on the layer n-1
+        t_PlayerBlur.GetComponent<SpriteRenderer>().sortingOrder = t_SpriteRenderer.sortingOrder - 1;
     }
 }
