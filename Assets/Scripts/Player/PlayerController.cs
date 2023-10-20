@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     public float QuickJumpSpeedIncrease = 0.2f;
     public float QuickJumpForceDecrease = 4f;
     public float WalkSpeed = 1f;
+    public float DashForce = 10f;
 
     public float JumpForce = 10f;
     public int JumpCount = 2;
@@ -27,6 +28,7 @@ public class PlayerController : MonoBehaviour
 
     public GameObject MagicalStarPrefab;
     public GameObject PlayerBlur;
+    public GameObject PlayerTrail;
 
     private bool m_UserJump = false;
     private bool m_UserMagicalAbility = false;
@@ -38,6 +40,10 @@ public class PlayerController : MonoBehaviour
     private bool m_EdgeGrab = false;
     private bool m_AttackCombo = false;
     private bool m_UserStoredAttack = false;
+    private bool m_UserDash = false;
+    private bool m_IsDashing = false;
+    private bool m_BlurSpeedEffect = false;
+
     private float m_StoredRunSpeed;
     private int m_StoredJumpCount;
     private Vector2 m_StoredVelocity;
@@ -72,7 +78,8 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // Jump input
-        if (Input.GetButtonDown("Jump") && !m_IsSliding && m_StoredJumpCount > 0) { // if the player is not sliding and has jump left
+        if (Input.GetButtonDown("Jump") && !m_IsSliding && m_StoredJumpCount > 0)
+        { // if the player is not sliding and has jump left
             if (m_StoredJumpCount != JumpCount)
                 m_SecondaryJump = true; // if the player is jumping for the second time, it's a secondary jump
             m_StoredJumpCount--;
@@ -86,6 +93,11 @@ public class PlayerController : MonoBehaviour
             m_StoredJumpCount--;
             m_UserQuickJump = true;
             m_Animator.SetTrigger("QuickJump");
+        }
+        else if (Input.GetButtonDown("CTRL") && !m_IsSliding && !m_UserDash && !m_IsDashing) // if the player is not sliding and the user press shift
+        {
+            m_UserDash = true;
+            m_Animator.SetTrigger("Dash");
         }
 
 
@@ -152,7 +164,8 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        MotionBlur();
+        if (m_IsDashing)
+            MotionBlur();
 
         //Debug.Log("RunSpeed: " + RunSpeed);
         //Debug.Log("Velocity: " + m_Rigidbody2D.velocity.x);
@@ -173,12 +186,12 @@ public class PlayerController : MonoBehaviour
             t_Force = WalkSpeed * Mathf.Sign(t_Force);
         //Debug.Log("Force: " + t_Force);
 
-        if (!m_IsSliding && !m_IsAttacking && m_IsGrounded)
+        if (!m_IsSliding && !m_IsAttacking && m_IsGrounded && !m_IsDashing)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (RunSpeed), m_Rigidbody2D.velocity.y);
             //m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
-        else if (!m_IsSliding && m_IsAttacking && m_IsGrounded)
+        else if (!m_IsSliding && m_IsAttacking && m_IsGrounded && !m_IsDashing)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (WalkSpeed), m_Rigidbody2D.velocity.y);
-        else if (!m_IsSliding && !m_IsAttacking && !m_IsGrounded)
+        else if (!m_IsSliding && !m_IsAttacking && !m_IsGrounded && !m_IsDashing)
             m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
 
         // Ground detection
@@ -214,7 +227,7 @@ public class PlayerController : MonoBehaviour
             transform.parent = null;
             m_EdgeGrab = false;
             m_Rigidbody2D.gravityScale = 1;
-            m_Animator.SetBool("IsGrabing", false);
+            m_Animator.SetBool("IsGrabing", false);                
         }
 
         if (m_EdgeGrab != t_PreviousEdgeGrab && m_EdgeGrab)
@@ -223,6 +236,7 @@ public class PlayerController : MonoBehaviour
             m_Animator.SetBool("IsGrabing", true);
             m_Rigidbody2D.gravityScale = 0;
             m_StoredJumpCount = JumpCount;
+            ResetDash();
         }
 
 
@@ -258,6 +272,7 @@ public class PlayerController : MonoBehaviour
         // Sliding
         // Ceiling detection
         bool t_IsCeiling = false;
+        bool t_PreviousIsSliding = m_IsSliding;
         if (m_IsSliding)
             t_IsCeiling = Physics2D.OverlapCircle(m_HeadSlidePos.position, 0.1f, m_GroundLayer) != null ? true : false;
         if (m_IsGrounded)
@@ -272,6 +287,7 @@ public class PlayerController : MonoBehaviour
             if (Mathf.Abs(m_Rigidbody2D.velocity.x) > RunSpeed)
                 t_Velocity = Vector2.right * SlideForceBoost * (m_StoredVelocity.x + Mathf.Abs(m_StoredVelocity.y)/2) * SlideForceDamping;
             m_Rigidbody2D.AddForce(t_Velocity, ForceMode2D.Impulse);
+            PlayerTrail.SetActive(true);
 
         }
         else if (m_IsSliding && t_IsCeiling) // if the player is sliding and there is a ceiling above him
@@ -288,6 +304,11 @@ public class PlayerController : MonoBehaviour
         {
             m_IsSliding = false;
             m_Animator.SetBool("IsSliding", false);
+        }
+
+        if (m_IsSliding != t_PreviousIsSliding && !m_IsSliding)
+        {
+            PlayerTrail.SetActive(false);
         }
 
 
@@ -331,6 +352,19 @@ public class PlayerController : MonoBehaviour
             //m_Rigidbody2D.AddForce(new Vector2(t_force, 0), ForceMode2D.Impulse);
         }
 
+        // Dash
+        if (m_UserDash)
+        {
+            Debug.Log("Dash");
+            m_UserDash = false;
+            m_IsDashing = true;
+            // Add force to whatever direction the player is facing
+            m_Rigidbody2D.AddForce(Vector2.right * DashForce * Mathf.Sign(transform.localScale.x), ForceMode2D.Impulse);
+            // Freeze Y axis
+            m_Rigidbody2D.constraints = m_Rigidbody2D.constraints | RigidbodyConstraints2D.FreezePositionY;
+            m_Animator.SetTrigger("Dash");
+        }
+
         m_StoredVelocity = m_Rigidbody2D.velocity;
     }
 
@@ -338,6 +372,14 @@ public class PlayerController : MonoBehaviour
     {
         yield return new WaitForSeconds(0.1f);
         m_IsJumping = false;
+    }
+
+    public void ResetDash()
+    {
+        // Remove the freeze on the Y axis
+        m_Rigidbody2D.constraints = m_Rigidbody2D.constraints & ~RigidbodyConstraints2D.FreezePositionY;
+        m_IsDashing = false;
+        PlayerTrail.SetActive(false);
     }
 
     public void MagicalStar()
@@ -374,16 +416,27 @@ public class PlayerController : MonoBehaviour
 
     public void MotionBlur()
     {
+        /*
         // Each frame, we get the current sprite of the player
         SpriteRenderer t_SpriteRenderer = this.gameObject.GetComponent<SpriteRenderer>();
+
         // We summon a prefab "PlayerBlur" and we set it's sprite to the current sprite of the player
         GameObject t_PlayerBlur = Instantiate(PlayerBlur, transform.position, Quaternion.identity);
+
+        // We set the sprite of the pooled object to the current sprite of the player
         t_PlayerBlur.GetComponent<SpriteRenderer>().sprite = t_SpriteRenderer.sprite;
+
         // We spawn it on the player position
         t_PlayerBlur.transform.position = transform.position;
+
         // We give it the same scale as the player
         t_PlayerBlur.transform.localScale = transform.localScale;
+
         // Move it on the layer n-1
         t_PlayerBlur.GetComponent<SpriteRenderer>().sortingOrder = t_SpriteRenderer.sortingOrder - 1;
+        */
+
+        //Activate playerTrail
+        PlayerTrail.SetActive(true);
     }
 }

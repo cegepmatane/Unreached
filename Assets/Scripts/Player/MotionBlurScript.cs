@@ -12,6 +12,6 @@ public class MotionBlurScript : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, GetComponent<SpriteRenderer>().color.a - 0.1f);
+        GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, GetComponent<SpriteRenderer>().color.a - 0.05f);
     }
 }

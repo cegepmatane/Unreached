@@ -9179,6 +9179,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 111149098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &879055817
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 879055818}
+  - component: {fileID: 879055819}
+  m_Layer: 9
+  m_Name: SpriteTrail
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &879055818
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 879055817}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1042186949}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &879055819
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 879055817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bca237fe98b47c49b1369c322a30595, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 1042186944}
+  trailPrefab: {fileID: 1897615787733037355, guid: d6772216192f40546921cc53178d50ad, type: 3}
+  spawnRate: 0
+  stepsPerUnit: 10
 --- !u!1 &891344996
 GameObject:
   m_ObjectHideFlags: 0
@@ -9486,6 +9534,7 @@ Transform:
   - {fileID: 1983740838}
   - {fileID: 1378931537}
   - {fileID: 1634508968}
+  - {fileID: 879055818}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1042186950
@@ -9507,6 +9556,7 @@ MonoBehaviour:
   QuickJumpSpeedIncrease: 0.2
   QuickJumpForceDecrease: 2
   WalkSpeed: 4
+  DashForce: 10
   JumpForce: 12
   JumpCount: 2
   SlideForceBoost: 1.2
@@ -9516,6 +9566,7 @@ MonoBehaviour:
   AttackFallSpeed: 1
   MagicalStarPrefab: {fileID: 283922506}
   PlayerBlur: {fileID: 1897615787733037355, guid: d6772216192f40546921cc53178d50ad, type: 3}
+  PlayerTrail: {fileID: 879055817}
   m_FeetPos: {fileID: 1486333475}
   m_HeadSlidePos: {fileID: 1763542562}
   m_WallRideR: {fileID: 1983740838}
