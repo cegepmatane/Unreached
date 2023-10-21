@@ -26,9 +26,15 @@ public class PlayerController : MonoBehaviour
     public float AttackWaitTime = 0.5f;
     public float AttackFallSpeed = 0.2f;
 
+    public float bloodSplashForce = 10f;
+    public int numberOfSplashes = 5; // Number of blood splashes to spawn
+    public float randomDirectionRange = 30f; // Range of random deviation in degrees
+    public float randomForceMultiplier = 0.5f; // Range of random deviation in force
+
     public GameObject MagicalStarPrefab;
     public GameObject PlayerBlur;
     public GameObject PlayerTrail;
+    public GameObject bloodSplashPrefab;
 
     private bool m_UserJump = false;
     private bool m_UserMagicalAbility = false;
@@ -42,12 +48,13 @@ public class PlayerController : MonoBehaviour
     private bool m_UserStoredAttack = false;
     private bool m_UserDash = false;
     private bool m_IsDashing = false;
-    private bool m_BlurSpeedEffect = false;
+    private bool m_IsGettingKnockback = false;
 
     private float m_StoredRunSpeed;
     private int m_StoredJumpCount;
     private Vector2 m_StoredVelocity;
     private bool m_IsJumping = false;
+    private bool m_IsDashAvailable = true;
 
     private Animator m_Animator;
     private Rigidbody2D m_Rigidbody2D;
@@ -78,7 +85,7 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // Jump input
-        if (Input.GetButtonDown("Jump") && !m_IsSliding && m_StoredJumpCount > 0)
+        if (Input.GetButtonDown("Jump") && !m_IsSliding && m_StoredJumpCount > 0 && !m_IsGettingKnockback)
         { // if the player is not sliding and has jump left
             if (m_StoredJumpCount != JumpCount)
                 m_SecondaryJump = true; // if the player is jumping for the second time, it's a secondary jump
@@ -94,15 +101,17 @@ public class PlayerController : MonoBehaviour
             m_UserQuickJump = true;
             m_Animator.SetTrigger("QuickJump");
         }
-        else if (Input.GetButtonDown("CTRL") && !m_IsSliding && !m_UserDash && !m_IsDashing) // if the player is not sliding and the user press shift
+        else if (Input.GetButtonDown("CTRL") && !m_IsSliding && !m_UserDash && !m_IsDashing && !m_IsGettingKnockback && m_IsDashAvailable) // if the player is not sliding and the user press shift
         {
             m_UserDash = true;
+            m_IsDashAvailable = false;
             m_Animator.SetTrigger("Dash");
+            StartCoroutine(ResetDashAvailable());
         }
 
 
         // Attack input
-        if ((Input.GetButtonDown("Fire1") || m_UserStoredAttack) && !m_IsSliding && !m_IsAttacking && !m_EdgeGrab && !m_AttackCombo) { // if the player is not sliding and is not attacking
+        if ((Input.GetButtonDown("Fire1") || m_UserStoredAttack) && !m_IsSliding && !m_IsAttacking && !m_EdgeGrab && !m_AttackCombo && !m_IsGettingKnockback) { // if the player is not sliding and is not attacking
             Debug.Log("Attack");
             m_Animator.SetTrigger("Attack");
             m_Animator.SetBool("IsNotACombo", false);
@@ -110,12 +119,12 @@ public class PlayerController : MonoBehaviour
             m_UserStoredAttack = false;
             StartCoroutine(ResetIsAttacking());
         }
-        else if (m_IsAttacking && Input.GetButtonDown("Fire1") && !m_AttackCombo)
+        else if (m_IsAttacking && Input.GetButtonDown("Fire1") && !m_AttackCombo && !m_IsGettingKnockback)
         {
             Debug.Log("AttackCombot");
             m_AttackCombo = true;
         }
-        else if (m_AttackCombo && Input.GetButtonDown("Fire1") && !m_UserStoredAttack)
+        else if (m_AttackCombo && Input.GetButtonDown("Fire1") && !m_UserStoredAttack && !m_IsGettingKnockback)
         {
             Debug.Log("Attack on wait");
             m_UserStoredAttack = true;
@@ -131,9 +140,10 @@ public class PlayerController : MonoBehaviour
 
         // If the user touch the void, he dies
         if (transform.position.y < -10) // if the player is below -10 on the Y axis
-            TakeDamage(99999);
+            TakeDamage(99999, Vector2.zero);
         
     }
+
 
     void IsACombo()
     {
@@ -144,6 +154,12 @@ public class PlayerController : MonoBehaviour
             // Stop ResetIsAttacking
             StopCoroutine(ResetIsAttacking());
         }
+    }
+
+    IEnumerator ResetDashAvailable()
+    {
+        yield return new WaitForSeconds(1f);
+        m_IsDashAvailable = true;
     }
 
     IEnumerator ResetIsAttacking()
@@ -186,12 +202,12 @@ public class PlayerController : MonoBehaviour
             t_Force = WalkSpeed * Mathf.Sign(t_Force);
         //Debug.Log("Force: " + t_Force);
 
-        if (!m_IsSliding && !m_IsAttacking && m_IsGrounded && !m_IsDashing)
+        if (!m_IsSliding && !m_IsAttacking && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (RunSpeed), m_Rigidbody2D.velocity.y);
             //m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
-        else if (!m_IsSliding && m_IsAttacking && m_IsGrounded && !m_IsDashing)
+        else if (!m_IsSliding && m_IsAttacking && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (WalkSpeed), m_Rigidbody2D.velocity.y);
-        else if (!m_IsSliding && !m_IsAttacking && !m_IsGrounded && !m_IsDashing)
+        else if (!m_IsSliding && !m_IsAttacking && !m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
             m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
 
         // Ground detection
@@ -240,8 +256,8 @@ public class PlayerController : MonoBehaviour
         }
 
 
-        if (m_IsGrounded == true && t_previousGrounded == false)
-        { // if the player just landed
+        if (m_IsGrounded == true && t_previousGrounded == false) // if the player just landed
+        {
             //m_Animator.SetTrigger("Land");
             // Give a boost depending on the previous velocity
             float t_RunSpeed = m_StoredRunSpeed * RunSpeedIncrease;
@@ -254,6 +270,7 @@ public class PlayerController : MonoBehaviour
             if (RunSpeed > MaxRunSpeedVelocity)
                 RunSpeed = MaxRunSpeedVelocity;
             m_StoredJumpCount = JumpCount;
+
             Debug.Log("Landed");
         }
 
@@ -264,7 +281,7 @@ public class PlayerController : MonoBehaviour
         }
  
         // Flip sprite
-        if (t_MoveX < 0 && transform.localScale.x > 0 || t_MoveX > 0 && transform.localScale.x < 0 && !m_IsSliding)
+        if ((t_MoveX < 0 && transform.localScale.x > 0 || t_MoveX > 0 && transform.localScale.x < 0) && !m_IsSliding && !m_IsDashing && !m_IsGettingKnockback)
         {
             transform.localScale = Vector3.Scale(transform.localScale, new Vector3(-1, 1, 1));
         }
@@ -278,7 +295,7 @@ public class PlayerController : MonoBehaviour
         if (m_IsGrounded)
             m_Rigidbody2D.velocity = new Vector2(m_Rigidbody2D.velocity.x, 0);
         // If the player velocity is greater than 4 and the player is player is facing the same direction as the velocity
-        if (Input.GetAxis("Shift") > 0 && !m_IsSliding && m_IsGrounded && t_SpeedX > 4 && Mathf.Sign(m_Rigidbody2D.velocity.x) == Mathf.Sign(transform.localScale.x))
+        if (Input.GetAxis("Shift") > 0 && !m_IsSliding && m_IsGrounded && !m_IsGettingKnockback && t_SpeedX > 4 && Mathf.Sign(m_Rigidbody2D.velocity.x) == Mathf.Sign(transform.localScale.x))
         {
             m_IsSliding = true;
             m_Animator.SetBool("IsSliding", true);
@@ -359,6 +376,7 @@ public class PlayerController : MonoBehaviour
             m_UserDash = false;
             m_IsDashing = true;
             // Add force to whatever direction the player is facing
+            m_Rigidbody2D.velocity = Vector2.zero;
             m_Rigidbody2D.AddForce(Vector2.right * DashForce * Mathf.Sign(transform.localScale.x), ForceMode2D.Impulse);
             // Freeze Y axis
             m_Rigidbody2D.constraints = m_Rigidbody2D.constraints | RigidbodyConstraints2D.FreezePositionY;
@@ -395,9 +413,14 @@ public class PlayerController : MonoBehaviour
         t_MagicalStar.SetActive(true);
     }
 
-    public void TakeDamage(int p_Damage)
+    public void TakeDamage(int p_Damage, Vector2 hitPosition)
     {
+        ResetDash();
+        if (m_IsGettingKnockback)
+            return;
+
         Health -= p_Damage;
+
         if (Health <= 0)
         {
             m_Animator.SetBool("IsDead", true);
@@ -411,7 +434,45 @@ public class PlayerController : MonoBehaviour
         {
             m_Animator.SetTrigger("TakeDamage");
             m_StatusManager.GetComponent<StatusManager>().setHealth(Health);
+            // Take a little knockback
         }
+
+        // Calculate the hit direction
+        Vector2 hitDirection = transform.position - (Vector3)hitPosition;
+
+        m_Rigidbody2D.AddForce(hitDirection.normalized * 7, ForceMode2D.Impulse);
+        m_IsGettingKnockback = true;
+        BloodSplatterEffect(hitDirection);
+    }
+
+    public void BloodSplatterEffect(Vector2 hitDirection)
+    {
+        for (int i = 0; i < numberOfSplashes; i++)
+        {
+            // Instantiate the blood splash sprite at the player's position
+            GameObject bloodSplash = Instantiate(bloodSplashPrefab, transform.position, Quaternion.identity);
+
+            // Get the Rigidbody2D component of the blood splash
+            Rigidbody2D bloodSplashRb = bloodSplash.GetComponent<Rigidbody2D>();
+
+            // Apply randomness to the hit direction and force
+            float randomAngle = Random.Range(-randomDirectionRange, randomDirectionRange);
+            float randomForce = bloodSplashForce * Random.Range(1 - randomForceMultiplier, 1 + randomForceMultiplier);
+            Vector2 randomDirection = Quaternion.Euler(0, 0, randomAngle) * hitDirection;
+
+            // Apply a force to the blood splash in the random hit direction
+            bloodSplashRb.AddForce(randomDirection.normalized * randomForce, ForceMode2D.Impulse);
+
+            // Set the blood splash to look at the target position based on the random hit direction
+            Vector3 targetPosition = transform.position - (Vector3)randomDirection;
+            targetPosition.z = bloodSplash.transform.position.z;
+            bloodSplash.transform.up = targetPosition - bloodSplash.transform.position;
+        }
+    }
+
+    public void EndKnockback()
+    {
+        m_IsGettingKnockback = false;
     }
 
     public void MotionBlur()

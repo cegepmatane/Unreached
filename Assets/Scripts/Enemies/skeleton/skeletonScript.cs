@@ -1,16 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.Sentis.Layers;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-public class skeletonScript : MonoBehaviour
+public class SkeletonScript : MonoBehaviour
 {
     public int health = 1;
     public bool isFacingRight;
     public int detectionRange = 20;
     public int speed = 50;
     public int getKnockedBack = 10;
+
+    public int numberOfSplashes = 5;
+    public GameObject bloodSplashPrefab;
+    public float bloodSplashForce = 5;
+    public float randomDirectionRange = 30;
+    public float randomForceMultiplier = 0.5f;
+
     private int storedHealth;
 
     [SerializeField] private Animator animator;
@@ -44,6 +51,10 @@ public class skeletonScript : MonoBehaviour
         // Speed inversely proportional to scale
         float randomSpeed = 1 / randomScale;
         speed = (int)(speed * randomSpeed);
+
+        // AttackSpeed inversely proportional to scale
+        float randomAttackSpeed = 1 / (randomScale-0.2f);
+        animator.SetFloat("AttackSpeed", randomAttackSpeed);
     }
 
     // Update is called once per frame
@@ -106,7 +117,14 @@ public class skeletonScript : MonoBehaviour
             rb.velocity = Vector2.zero;
             currentState = State.Attack;
             float randomAttack = UnityEngine.Random.Range(0f, 1f);
-            if (randomAttack < 0.7f)
+
+            // If the player is above me (taking account of both scales), play the attack animation 2
+            if (player.transform.position.y > transform.position.y + transform.localScale.y * 0.5f + player.transform.localScale.y * 0.5f)
+            {
+                Debug.Log("Attack2 UP");
+                animator.SetTrigger("Attack2");
+            }
+            else if (randomAttack < 0.7f)
             {
                 Debug.Log("Attack");
                 animator.SetTrigger("Attack");
@@ -165,6 +183,10 @@ public class skeletonScript : MonoBehaviour
         
         health -= damage;
         animator.SetTrigger("TakeHit");
+
+        Vector2 attackerPosition = GameObject.FindGameObjectWithTag("Player").transform.position;
+        Vector2 knockbackDirection = (transform.position - (Vector3)attackerPosition).normalized;
+
         if (health <= 0)
         {
             animator.SetBool("IsDead", true);
@@ -176,12 +198,36 @@ public class skeletonScript : MonoBehaviour
         {
             // Apply knockback effect
             Rigidbody2D rb = GetComponent<Rigidbody2D>();
-            Vector2 attackerPosition = GameObject.FindGameObjectWithTag("Player").transform.position;
-            Vector2 knockbackDirection = (transform.position - (Vector3)attackerPosition).normalized;
             rb.AddForce(knockbackDirection * getKnockedBack, ForceMode2D.Impulse);
             //state stuned
             currentState = State.Stuned;
             StartCoroutine(UnStund());
+        }
+        BloodSplatterEffect(knockbackDirection);
+    }
+
+    public void BloodSplatterEffect(Vector2 hitDirection)
+    {
+        for (int i = 0; i < numberOfSplashes; i++)
+        {
+            // Instantiate the blood splash sprite at the player's position
+            GameObject bloodSplash = Instantiate(bloodSplashPrefab, transform.position, Quaternion.identity);
+
+            // Get the Rigidbody2D component of the blood splash
+            Rigidbody2D bloodSplashRb = bloodSplash.GetComponent<Rigidbody2D>();
+
+            // Apply randomness to the hit direction and force
+            float randomAngle = Random.Range(-randomDirectionRange, randomDirectionRange);
+            float randomForce = bloodSplashForce * Random.Range(1 - randomForceMultiplier, 1 + randomForceMultiplier);
+            Vector2 randomDirection = Quaternion.Euler(0, 0, randomAngle) * hitDirection;
+
+            // Apply a force to the blood splash in the random hit direction
+            bloodSplashRb.AddForce(randomDirection.normalized * randomForce, ForceMode2D.Impulse);
+
+            // Set the blood splash to look at the target position based on the random hit direction
+            Vector3 targetPosition = transform.position - (Vector3)randomDirection;
+            targetPosition.z = bloodSplash.transform.position.z;
+            bloodSplash.transform.up = targetPosition - bloodSplash.transform.position;
         }
     }
 

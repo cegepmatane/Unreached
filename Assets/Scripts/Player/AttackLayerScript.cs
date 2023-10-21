@@ -9,7 +9,7 @@ public class AttackLayerScript : MonoBehaviour
         if (col.gameObject.tag == "Enemy")
         {
             Debug.Log("SWORD HIT ENEMY");
-            col.gameObject?.GetComponent<skeletonScript>()?.TakeDamage(1);
+            col.gameObject?.GetComponent<SkeletonScript>()?.TakeDamage(1);
         }
     }
 }
