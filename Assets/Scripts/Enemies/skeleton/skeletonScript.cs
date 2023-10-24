@@ -2,23 +2,28 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.UI.Image;
 using Random = UnityEngine.Random;
 
 public class SkeletonScript : MonoBehaviour
 {
     public int health = 1;
-    public bool isFacingRight;
+    public bool isFacingLeft = false;
     public int detectionRange = 20;
     public int speed = 50;
     public int getKnockedBack = 10;
+    public int lifes = 2;
 
     public int numberOfSplashes = 5;
     public GameObject bloodSplashPrefab;
+    public GameObject skeletonParts;
+    public GameObject magicPrefab;
     public float bloodSplashForce = 5;
     public float randomDirectionRange = 30;
     public float randomForceMultiplier = 0.5f;
 
     private int storedHealth;
+    private float randomScale;
 
     [SerializeField] private Animator animator;
 
@@ -43,7 +48,7 @@ public class SkeletonScript : MonoBehaviour
         currentTarget = target;
 
         // Randomize the scale by 20%
-        float randomScale = UnityEngine.Random.Range(0.8f, 1.2f);
+        randomScale = Random.Range(0.8f, 1.2f);
         transform.localScale = Vector3.Scale(transform.localScale, new Vector3(randomScale, randomScale, randomScale));
         // Health based on scale
         health = (int)(health * randomScale);
@@ -71,68 +76,59 @@ public class SkeletonScript : MonoBehaviour
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         Vector2 playerHorizontalPosition = new Vector2(player.transform.position.x, transform.position.y);
-        float raycastDistance = 2f; // Adjust this value based on the enemy's size and desired ground detection distance
+        // ground detection distance
+        float raycastDistance = transform.localScale.y * 0.35f;
         float selfxVelocity = rb.velocity.x;
 
         if (!isPlayerNoticed)
         {
-            if (isFacingRight && selfxVelocity > 0 || !isFacingRight && selfxVelocity < 0)
+            if (isFacingLeft && selfxVelocity > 0 || !isFacingLeft && selfxVelocity < 0)
             {
                 Debug.Log("Flipping");
                 transform.localScale = Vector3.Scale(transform.localScale, new Vector3(-1, 1, 1));
-                isFacingRight = !isFacingRight;
+                isFacingLeft = !isFacingLeft;
             }
         }
         else
         {
             // player is noticed, face the player
-            if (!isFacingRight && player.transform.position.x < transform.position.x || isFacingRight && player.transform.position.x > transform.position.x)
+            if (!isFacingLeft && player.transform.position.x < transform.position.x || isFacingLeft && player.transform.position.x > transform.position.x)
             {
                 Debug.Log("Flipping");
                 transform.localScale = Vector3.Scale(transform.localScale, new Vector3(-1, 1, 1));
-                isFacingRight = !isFacingRight;
+                isFacingLeft = !isFacingLeft;
             }
         }
 
 
-        if (Vector2.Distance(transform.position, playerHorizontalPosition) > 2)
+        if (Vector2.Distance(transform.position, playerHorizontalPosition) > 2 && currentState != State.Shielded && currentState != State.Attack)
         {
             Vector2 direction = (playerHorizontalPosition - (Vector2)transform.position).normalized;
             rb.AddForce(direction * speed - rb.velocity, ForceMode2D.Force);
             //animator.SetBool("IsWalking", true);
-
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, raycastDistance);
-            if (hit.collider != null)
-            {
-                float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
-                if (slopeAngle > 0)
-                {
-                    Vector2 slopeDirection = Vector2.Perpendicular(hit.normal).normalized;
-                    rb.AddForce(slopeDirection * speed * Mathf.Sin(slopeAngle * Mathf.Deg2Rad), ForceMode2D.Force);
-                }
-            }
         }
         else
         {
             rb.velocity = Vector2.zero;
-            currentState = State.Attack;
-            float randomAttack = UnityEngine.Random.Range(0f, 1f);
-
-            // If the player is above me (taking account of both scales), play the attack animation 2
-            if (player.transform.position.y > transform.position.y + transform.localScale.y * 0.5f + player.transform.localScale.y * 0.5f)
+            float randomAttack = Random.Range(0f, 1.2f);
+            
+            if (player.transform.position.y > transform.position.y + transform.localScale.y * 0.5f + player.transform.localScale.y * 0.5f) // If the player is above me (taking account of both scales), play the attack animation 2
             {
                 Debug.Log("Attack2 UP");
                 animator.SetTrigger("Attack2");
+                currentState = State.Attack;
             }
             else if (randomAttack < 0.7f)
             {
                 Debug.Log("Attack");
                 animator.SetTrigger("Attack");
+                currentState = State.Attack;
             }
             else
             {
                 Debug.Log("Attack2");
                 animator.SetTrigger("Attack2");
+                currentState = State.Attack;
             }
             StartCoroutine(ResetAttack());
         }
@@ -180,26 +176,50 @@ public class SkeletonScript : MonoBehaviour
     {
         if (currentState == State.Dead)
             return;
+
+        Vector2 attackerPosition = GameObject.FindGameObjectWithTag("Player").transform.position;
+        Vector2 knockbackDirection = (transform.position - (Vector3)attackerPosition).normalized;
         
         health -= damage;
         animator.SetTrigger("TakeHit");
 
-        Vector2 attackerPosition = GameObject.FindGameObjectWithTag("Player").transform.position;
-        Vector2 knockbackDirection = (transform.position - (Vector3)attackerPosition).normalized;
 
         if (health <= 0)
         {
             animator.SetBool("IsDead", true);
             currentState = State.Dead;
             //Coroutine to revive after 5 seconds
-            StartCoroutine(Revive());
+            if (lifes > 0)
+            {
+                lifes--;
+                StartCoroutine(Revive());
+            }
+            else
+            {
+                // Spawn skeleton parts
+                GameObject skeletonPartsInstance = Instantiate(skeletonParts, transform.position, Quaternion.identity);
+                // Apply the same scale to the skeleton parts
+                skeletonPartsInstance.transform.localScale = skeletonPartsInstance.transform.localScale * randomScale;
+                // Flip it the same way as the enemy
+                if (isFacingLeft)
+                {
+                    skeletonPartsInstance.transform.localScale = Vector3.Scale(skeletonPartsInstance.transform.localScale, new Vector3(-1, 1, 1));
+                }
+                // Destroy the skeleton parts after 5 seconds
+                Destroy(skeletonPartsInstance, 5f);
+                // Spawn magic after 2s
+                Instantiate(magicPrefab, transform.position, Quaternion.identity);
+                // Add +1 kill to the player
+                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>().Kills++;
+                Destroy(gameObject);
+            }
         }
         else
         {
             // Apply knockback effect
             Rigidbody2D rb = GetComponent<Rigidbody2D>();
             rb.AddForce(knockbackDirection * getKnockedBack, ForceMode2D.Impulse);
-            //state stuned
+            // state stuned
             currentState = State.Stuned;
             StartCoroutine(UnStund());
         }

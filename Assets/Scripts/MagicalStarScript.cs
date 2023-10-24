@@ -5,6 +5,13 @@ using UnityEngine;
 public class MagicalStarScript : MonoBehaviour
 {
     public float shrinkSpeed = 1.0f;
+    public GameObject explosionEffect1;
+    public GameObject explosionEffect2;
+    public GameObject explosionEffect3;
+    public GameObject explosionEffect4;
+
+    public int damages = 10;
+
     private float originalSize;
 
     void Start()
@@ -19,10 +26,27 @@ public class MagicalStarScript : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // if size is less than 1, self destruct
-        if (transform.localScale.x < 0.01)
+        // if size is less than 1, deactivate the 
+        if (transform.localScale.x < originalSize * 0.1)
         {
-            //Destroy(gameObject);
+            // Instantiate explosion effect
+            Instantiate(explosionEffect1, transform.position, Quaternion.identity);
+            Instantiate(explosionEffect2, transform.position, Quaternion.identity);
+            GameObject electricalEffect = Instantiate(explosionEffect3, transform.position, Quaternion.identity);
+            Instantiate(explosionEffect4, transform.position, Quaternion.identity);
+            // Destroy the star after 0.01s
+            Destroy(gameObject, 0.2f);
+            Destroy(electricalEffect, 1.5f);
+
+            // If an enemy "tag == Ennemy" is in the original size of the star, deal damage
+            Collider[] colliders = Physics.OverlapSphere(transform.position, originalSize);
+            foreach (Collider nearbyObject in colliders)
+            {
+                if (nearbyObject.tag == "Enemy")
+                {
+                    nearbyObject.GetComponent<SkeletonScript>().TakeDamage(damages);
+                }
+            }
         }
 
         // Decrease size using an inverse function and sync with Time.deltaTime

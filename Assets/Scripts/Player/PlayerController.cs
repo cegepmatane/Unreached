@@ -22,6 +22,8 @@ public class PlayerController : MonoBehaviour
     public float SlideForceDamping = 0.3f;
 
     public int Health = 100;
+    public int Magic = 0;
+    public int Kills = 0;
 
     public float AttackWaitTime = 0.5f;
     public float AttackFallSpeed = 0.2f;
@@ -40,6 +42,7 @@ public class PlayerController : MonoBehaviour
     private bool m_UserMagicalAbility = false;
     private bool m_UserQuickJump = false;
     private bool m_SecondaryJump = false;
+    private bool m_UserWallJump = false;
     private bool m_IsGrounded = false;
     private bool m_IsSliding = false;
     private bool m_IsAttacking = false;
@@ -85,13 +88,26 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // Jump input
-        if (Input.GetButtonDown("Jump") && !m_IsSliding && m_StoredJumpCount > 0 && !m_IsGettingKnockback)
-        { // if the player is not sliding and has jump left
-            if (m_StoredJumpCount != JumpCount)
-                m_SecondaryJump = true; // if the player is jumping for the second time, it's a secondary jump
-            m_StoredJumpCount--;
-            m_UserJump = true;
-            m_Animator.SetTrigger("Jump");
+        if (Input.GetButtonDown("Jump") && !m_IsSliding && !m_IsGettingKnockback && !m_IsDashing) // if the player is not sliding and has jump left
+        {
+            // Raycast to check if there is a wall in front of the player
+            // Rayscast pos
+            float RaycastDistance = 1.5f;
+            RaycastHit2D t_RaycastHit2D = Physics2D.Raycast(transform.position, Vector2.right * Mathf.Sign(transform.localScale.x), RaycastDistance, m_GroundLayer);
+            if (t_RaycastHit2D.collider != null || (m_EdgeGrab && transform == null)) // if the raycast hit something or the player is edge grabbing and 
+            {
+                Debug.DrawRay(transform.position, Vector2.right * Mathf.Sign(transform.localScale.x) * RaycastDistance, Color.red, 5f);
+                m_UserWallJump = true;
+                m_Animator.SetTrigger("Walljump");
+            }
+            else if (m_StoredJumpCount > 0)
+            {
+                if (m_StoredJumpCount != JumpCount)
+                    m_SecondaryJump = true; // if the player is jumping for the second time, it's a secondary jump
+                m_StoredJumpCount--;
+                m_UserJump = true;
+                m_Animator.SetTrigger("Jump");
+            }
         }
         else if (Input.GetButtonDown("Jump") && m_IsSliding && m_StoredJumpCount > 0) // if the player is sliding and has jump left
         {
@@ -101,7 +117,7 @@ public class PlayerController : MonoBehaviour
             m_UserQuickJump = true;
             m_Animator.SetTrigger("QuickJump");
         }
-        else if (Input.GetButtonDown("CTRL") && !m_IsSliding && !m_UserDash && !m_IsDashing && !m_IsGettingKnockback && m_IsDashAvailable) // if the player is not sliding and the user press shift
+        else if (Input.GetButtonDown("CTRL") && !m_IsSliding && !m_UserDash && !m_IsDashing && !m_IsGettingKnockback && m_IsDashAvailable && !m_EdgeGrab) // if the player is not sliding and the user press shift
         {
             m_UserDash = true;
             m_IsDashAvailable = false;
@@ -131,10 +147,11 @@ public class PlayerController : MonoBehaviour
         }
 
         // Magical ability input
-        if (Input.GetButtonDown("Fire2"))
+        if (Input.GetButtonDown("Fire2") && Magic >= 95) // if the player has enough magic
         {
             Debug.Log("MagicalAbility");
             m_UserMagicalAbility = true;
+            Magic = 0;
         }
 
 
@@ -295,7 +312,7 @@ public class PlayerController : MonoBehaviour
         if (m_IsGrounded)
             m_Rigidbody2D.velocity = new Vector2(m_Rigidbody2D.velocity.x, 0);
         // If the player velocity is greater than 4 and the player is player is facing the same direction as the velocity
-        if (Input.GetAxis("Shift") > 0 && !m_IsSliding && m_IsGrounded && !m_IsGettingKnockback && t_SpeedX > 4 && Mathf.Sign(m_Rigidbody2D.velocity.x) == Mathf.Sign(transform.localScale.x))
+        if (Input.GetAxis("Shift") > 0 && !m_IsSliding && m_IsGrounded && !m_IsGettingKnockback && !m_IsDashing && t_SpeedX > 4 && Mathf.Sign(m_Rigidbody2D.velocity.x) == Mathf.Sign(transform.localScale.x))
         {
             m_IsSliding = true;
             m_Animator.SetBool("IsSliding", true);
@@ -368,6 +385,30 @@ public class PlayerController : MonoBehaviour
 
             //m_Rigidbody2D.AddForce(new Vector2(t_force, 0), ForceMode2D.Impulse);
         }
+        else if (m_UserWallJump)
+        {
+            m_EdgeGrab = false;
+            m_Animator.SetBool("IsGrabing", false);
+
+            m_UserWallJump = false;
+            // Inverse player horizontal velocity
+            m_Rigidbody2D.velocity = new Vector2(-m_Rigidbody2D.velocity.x * 0.5f, 0);
+
+            // Flip sprite
+            transform.localScale = Vector3.Scale(transform.localScale, new Vector3(-1, 1, 1));
+
+            // Add the sidekick force
+
+
+
+
+
+
+            m_Rigidbody2D.AddForce(Vector2.right * JumpForce * 1f * Mathf.Sign(transform.localScale.x), ForceMode2D.Impulse);
+
+            // Add the upward force
+            m_Rigidbody2D.AddForce(Vector2.up * JumpForce * 0.5f, ForceMode2D.Impulse);
+        }
 
         // Dash
         if (m_UserDash)
@@ -416,6 +457,8 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int p_Damage, Vector2 hitPosition)
     {
         ResetDash();
+        m_Animator.SetBool("IsGrabing", false);
+
         if (m_IsGettingKnockback)
             return;
 
@@ -499,5 +542,11 @@ public class PlayerController : MonoBehaviour
 
         //Activate playerTrail
         PlayerTrail.SetActive(true);
+    }
+
+    public void GatherMagic(int p_Magic)
+    {
+        Magic += p_Magic;
+        m_StatusManager.GetComponent<StatusManager>().setMagic(Magic);
     }
 }
