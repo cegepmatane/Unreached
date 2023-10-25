@@ -13,6 +13,7 @@ public class SkeletonScript : MonoBehaviour
     public int speed = 50;
     public int getKnockedBack = 10;
     public int lifes = 2;
+    public float takeDamageBuffer = 0.5f;
 
     public int numberOfSplashes = 5;
     public GameObject bloodSplashPrefab;
@@ -22,6 +23,7 @@ public class SkeletonScript : MonoBehaviour
     public float randomDirectionRange = 30;
     public float randomForceMultiplier = 0.5f;
 
+    private bool hasJustLostALife = false;
     private int storedHealth;
     private float randomScale;
 
@@ -75,7 +77,7 @@ public class SkeletonScript : MonoBehaviour
         // If farther than 2 units away from the target, move towards it
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        Vector2 playerHorizontalPosition = new Vector2(player.transform.position.x, transform.position.y);
+
         // ground detection distance
         float raycastDistance = transform.localScale.y * 0.35f;
         float selfxVelocity = rb.velocity.x;
@@ -100,14 +102,15 @@ public class SkeletonScript : MonoBehaviour
             }
         }
 
-
-        if (Vector2.Distance(transform.position, playerHorizontalPosition) > 2 && currentState != State.Shielded && currentState != State.Attack)
+        // get current target position
+        Vector2 t_CurrentTargetPos = currentTarget.transform.position;
+        if (Vector2.Distance(transform.position, t_CurrentTargetPos) > 2 && currentState != State.Shielded && currentState != State.Attack)
         {
-            Vector2 direction = (playerHorizontalPosition - (Vector2)transform.position).normalized;
+            Vector2 direction = (t_CurrentTargetPos - (Vector2)transform.position).normalized;
             rb.AddForce(direction * speed - rb.velocity, ForceMode2D.Force);
             //animator.SetBool("IsWalking", true);
         }
-        else
+        else if (isPlayerNoticed)
         {
             rb.velocity = Vector2.zero;
             float randomAttack = Random.Range(0f, 1.2f);
@@ -181,21 +184,25 @@ public class SkeletonScript : MonoBehaviour
         Vector2 knockbackDirection = (transform.position - (Vector3)attackerPosition).normalized;
         
         health -= damage;
-        animator.SetTrigger("TakeHit");
-
+        if (!hasJustLostALife)
+            animator.SetTrigger("TakeHit");
 
         if (health <= 0)
         {
             animator.SetBool("IsDead", true);
-            currentState = State.Dead;
+            StartCoroutine(TakeDamageBuffer());
+
             //Coroutine to revive after 5 seconds
-            if (lifes > 0)
+            Debug.Log("Lifes: " + lifes + " Damage: " + damage + " StoredHealth: " + storedHealth);
+            if (lifes > 0 && !(damage > 2*storedHealth) && !hasJustLostALife) // If the damage is more than twice the health, don't revive
             {
                 lifes--;
+                hasJustLostALife = true;
                 StartCoroutine(Revive());
             }
-            else
+            else if (lifes <= 0 && !hasJustLostALife)
             {
+                currentState = State.Dead;
                 // Spawn skeleton parts
                 GameObject skeletonPartsInstance = Instantiate(skeletonParts, transform.position, Quaternion.identity);
                 // Apply the same scale to the skeleton parts
@@ -224,6 +231,12 @@ public class SkeletonScript : MonoBehaviour
             StartCoroutine(UnStund());
         }
         BloodSplatterEffect(knockbackDirection);
+    }
+
+    public IEnumerator TakeDamageBuffer()
+    {
+        yield return new WaitForSeconds(takeDamageBuffer);
+        currentState = State.Dead;
     }
 
     public void BloodSplatterEffect(Vector2 hitDirection)
@@ -273,6 +286,7 @@ public class SkeletonScript : MonoBehaviour
         float reviveTime = UnityEngine.Random.Range(5f, 10f);
         yield return new WaitForSeconds(reviveTime);
         animator.SetBool("IsDead", false);
+        hasJustLostALife = false;
         StartCoroutine(ReActivate());
     }
 

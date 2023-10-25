@@ -52,6 +52,7 @@ public class PlayerController : MonoBehaviour
     private bool m_UserDash = false;
     private bool m_IsDashing = false;
     private bool m_IsGettingKnockback = false;
+    private bool m_HasJustJumped = false;
 
     private float m_StoredRunSpeed;
     private int m_StoredJumpCount;
@@ -98,6 +99,7 @@ public class PlayerController : MonoBehaviour
             {
                 Debug.DrawRay(transform.position, Vector2.right * Mathf.Sign(transform.localScale.x) * RaycastDistance, Color.red, 5f);
                 m_UserWallJump = true;
+                m_StoredJumpCount = JumpCount;
                 m_Animator.SetTrigger("Walljump");
             }
             else if (m_StoredJumpCount > 0)
@@ -108,6 +110,7 @@ public class PlayerController : MonoBehaviour
                 m_UserJump = true;
                 m_Animator.SetTrigger("Jump");
             }
+            m_HasJustJumped = true;
         }
         else if (Input.GetButtonDown("Jump") && m_IsSliding && m_StoredJumpCount > 0) // if the player is sliding and has jump left
         {
@@ -151,12 +154,12 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("MagicalAbility");
             m_UserMagicalAbility = true;
-            Magic = 0;
+            Magic = 100;
         }
 
 
         // If the user touch the void, he dies
-        if (transform.position.y < -10) // if the player is below -10 on the Y axis
+        if (transform.position.y < -20) // if the player is below -10 on the Y axis
             TakeDamage(99999, Vector2.zero);
         
     }
@@ -197,6 +200,9 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        m_StatusManager.GetComponent<StatusManager>().setMagic(Magic);
+        m_StatusManager.GetComponent<StatusManager>().setHealth(Health);
+
         if (m_IsDashing)
             MotionBlur();
 
@@ -396,18 +402,13 @@ public class PlayerController : MonoBehaviour
 
             // Flip sprite
             transform.localScale = Vector3.Scale(transform.localScale, new Vector3(-1, 1, 1));
+            StartCoroutine(LockFlip(transform.localScale));
 
             // Add the sidekick force
-
-
-
-
-
-
             m_Rigidbody2D.AddForce(Vector2.right * JumpForce * 1f * Mathf.Sign(transform.localScale.x), ForceMode2D.Impulse);
 
             // Add the upward force
-            m_Rigidbody2D.AddForce(Vector2.up * JumpForce * 0.5f, ForceMode2D.Impulse);
+            m_Rigidbody2D.AddForce(Vector2.up * JumpForce * 0.8f, ForceMode2D.Impulse);
         }
 
         // Dash
@@ -422,9 +423,26 @@ public class PlayerController : MonoBehaviour
             // Freeze Y axis
             m_Rigidbody2D.constraints = m_Rigidbody2D.constraints | RigidbodyConstraints2D.FreezePositionY;
             m_Animator.SetTrigger("Dash");
+        } 
+        else if (m_IsDashing && m_Rigidbody2D.velocity.x == 0)
+        {
+            ResetDash();
         }
 
         m_StoredVelocity = m_Rigidbody2D.velocity;
+    }
+
+    //Lock the player's flip for 0.5f
+    IEnumerator LockFlip(Vector3 scale)
+    {
+        //for 0,5f, the player can't flip
+        float t_Time = 0;
+        while (t_Time < 0.2f)
+        {
+            t_Time += Time.deltaTime;
+            transform.localScale = scale;
+            yield return null;
+        }
     }
 
     IEnumerator ResetIsJumping()
@@ -470,13 +488,11 @@ public class PlayerController : MonoBehaviour
             Time.timeScale = 0.33f;
             m_GameOverScren.SetActive(true);
             this.gameObject.GetComponent<PlayerController>().enabled = false;
-            m_StatusManager.GetComponent<StatusManager>().setHealth(0);
             
         }
         else
         {
             m_Animator.SetTrigger("TakeDamage");
-            m_StatusManager.GetComponent<StatusManager>().setHealth(Health);
             // Take a little knockback
         }
 
@@ -547,6 +563,5 @@ public class PlayerController : MonoBehaviour
     public void GatherMagic(int p_Magic)
     {
         Magic += p_Magic;
-        m_StatusManager.GetComponent<StatusManager>().setMagic(Magic);
     }
 }

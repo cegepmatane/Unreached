@@ -34,16 +34,16 @@ public class StatusManager : MonoBehaviour
     public void setHealth(int health)
     {
         float AvailableSpace = HeartPanel.GetComponent<RectTransform>().rect.width-10;
-        Debug.Log(AvailableSpace);
+        if (health > 100) health = 100;
+        else if (health < 0) health = 0;
         HeartFillValue = AvailableSpace * health / 100;
-        Debug.Log(HeartFillValue);
     }
 
     public void setMagic(int magic)
     {
         float AvailableSpace = MagicPanel.GetComponent<RectTransform>().rect.width-10;
-        Debug.Log(AvailableSpace);
+        if (magic > 100) magic = 100;
+        else if (magic < 0) magic = 0;
         MagicFillValue = AvailableSpace * magic / 100;
-        Debug.Log(MagicFillValue);
     }
 }

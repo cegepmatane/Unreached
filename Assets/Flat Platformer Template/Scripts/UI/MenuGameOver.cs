@@ -74,7 +74,7 @@ public class MenuGameOver : MonoBehaviour
         activateFadeOut = false;
         activateFadeRestart = false;
         activateFadeMainMenu = false;
-        SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
+        SceneManager.LoadScene("level_0", LoadSceneMode.Single);
     }
 
     public void MainMenu()

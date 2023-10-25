@@ -13,6 +13,7 @@ public class MagicalStarScript : MonoBehaviour
     public int damages = 10;
 
     private float originalSize;
+    private bool hasExploded = false;
 
     void Start()
     {
@@ -38,15 +39,31 @@ public class MagicalStarScript : MonoBehaviour
             Destroy(gameObject, 0.2f);
             Destroy(electricalEffect, 1.5f);
 
-            // If an enemy "tag == Ennemy" is in the original size of the star, deal damage
-            Collider[] colliders = Physics.OverlapSphere(transform.position, originalSize);
-            foreach (Collider nearbyObject in colliders)
-            {
-                if (nearbyObject.tag == "Enemy")
+            // If an enemy is in the original size of the star, deal damage
+            // Spawn a bunch of raycasts in a circle
+            if (!hasExploded) {
+                for (int i = 0; i < 360; i += 10)
                 {
-                    nearbyObject.GetComponent<SkeletonScript>().TakeDamage(damages);
+                    float t_RaycastSize = originalSize * 0.8f;
+                    RaycastHit2D hit = Physics2D.Raycast(transform.position, Quaternion.Euler(0, 0, i) * Vector2.up, t_RaycastSize, LayerMask.GetMask("Enemies"));
+                    if (hit.collider != null)
+                    {
+                        Debug.DrawRay(transform.position, Quaternion.Euler(0, 0, i) * Vector2.up * t_RaycastSize, Color.red, 5f);
+                        try
+                        {
+                            hit.collider.GetComponent<SkeletonScript>().TakeDamage(damages);
+                        }
+                        catch
+                        {
+                        }
+                    }
+                    else
+                    {
+                        Debug.DrawRay(transform.position, Quaternion.Euler(0, 0, i) * Vector2.up * t_RaycastSize, Color.green, 5f);
+                    }
                 }
             }
+            hasExploded = true;
         }
 
         // Decrease size using an inverse function and sync with Time.deltaTime
