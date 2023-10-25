@@ -52,7 +52,8 @@ public class PlayerController : MonoBehaviour
     private bool m_UserDash = false;
     private bool m_IsDashing = false;
     private bool m_IsGettingKnockback = false;
-    private bool m_HasJustJumped = false;
+
+    public bool isSlidingOnIce = false;
 
     private float m_StoredRunSpeed;
     private int m_StoredJumpCount;
@@ -110,7 +111,6 @@ public class PlayerController : MonoBehaviour
                 m_UserJump = true;
                 m_Animator.SetTrigger("Jump");
             }
-            m_HasJustJumped = true;
         }
         else if (Input.GetButtonDown("Jump") && m_IsSliding && m_StoredJumpCount > 0) // if the player is sliding and has jump left
         {
@@ -221,16 +221,17 @@ public class PlayerController : MonoBehaviour
         m_Animator.SetFloat("Speed", Mathf.Abs(t_MoveX));
 
         float t_Force = t_MoveX * RunSpeed;
-        if (Mathf.Abs(t_Force) > WalkSpeed) // if the force is greater than the walk speed, clamp it
+        if (Mathf.Abs(t_Force) > RunSpeed) // if the force is greater than the walk speed, clamp it
             t_Force = WalkSpeed * Mathf.Sign(t_Force);
         //Debug.Log("Force: " + t_Force);
 
-        if (!m_IsSliding && !m_IsAttacking && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
+        if (isSlidingOnIce && !m_UserJump && !m_IsJumping)
+            m_Rigidbody2D.AddForce(new Vector2(t_Force*1.1f, 0), ForceMode2D.Force);
+        else if (!m_IsSliding && !m_IsAttacking && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (RunSpeed), m_Rigidbody2D.velocity.y);
-            //m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
-        else if (!m_IsSliding && m_IsAttacking && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
+        else if (!m_IsSliding && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback && m_IsAttacking)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (WalkSpeed), m_Rigidbody2D.velocity.y);
-        else if (!m_IsSliding && !m_IsAttacking && !m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
+        else if (!m_IsSliding && !m_IsAttacking && !m_IsDashing && !m_IsGettingKnockback && !m_IsGrounded)
             m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
 
         // Ground detection
