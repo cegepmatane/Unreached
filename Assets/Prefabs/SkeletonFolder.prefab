@@ -254,11 +254,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   health: 10
   isFacingLeft: 0
-  detectionRange: 15
-  speed: 10
+  detectionRange: 20
+  speed: 15
   getKnockedBack: 3
-  lifes: 999
-  takeDamageBuffer: 0.5
+  lifes: 1
+  takeDamageBuffer: 0.1
   numberOfSplashes: 2
   bloodSplashPrefab: {fileID: 4095807443420092712, guid: 58055dbf3432da043a1e4e491b3ce532, type: 3}
   skeletonParts: {fileID: 394733683786016123, guid: d8b801ccfb31f6147bc48635ec94bea5, type: 3}
@@ -282,10 +282,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43887eb7decb72941b4a2d3077241b3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  frame2: {fileID: 0}
-  frame3: {fileID: 0}
-  frame4: {fileID: 0}
-  frame5: {fileID: 0}
+  frame2: {fileID: 1479817278781068294, guid: adbb8fa94518bca41a7c55bbcd27bfc8, type: 3}
+  frame3: {fileID: 7333347219529181023, guid: 430ec5be95f2b6246ba6251008231af4, type: 3}
+  frame4: {fileID: 2340722983283640597, guid: 979983db99f12e542b3a87848d2ce4bd, type: 3}
+  frame5: {fileID: 8876463665974271877, guid: 40d97e2b08d2db44b975d0b177564d32, type: 3}
   attackLayerGameObject: {fileID: 7165967651529447589}
 --- !u!1 &4030878587112702139
 GameObject:

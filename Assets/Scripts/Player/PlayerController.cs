@@ -476,6 +476,8 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(int p_Damage, Vector2 hitPosition)
     {
         ResetDash();
+        ResetIsAttacking();
+
         m_Animator.SetBool("IsGrabing", false);
 
         if (m_IsGettingKnockback)
@@ -502,6 +504,7 @@ public class PlayerController : MonoBehaviour
 
         m_Rigidbody2D.AddForce(hitDirection.normalized * 7, ForceMode2D.Impulse);
         m_IsGettingKnockback = true;
+        Debug.Log("m_IsGettingKnockback = true");
         BloodSplatterEffect(hitDirection);
     }
 
@@ -532,6 +535,7 @@ public class PlayerController : MonoBehaviour
 
     public void EndKnockback()
     {
+        Debug.Log("m_IsGettingKnockback = false");
         m_IsGettingKnockback = false;
     }
 
