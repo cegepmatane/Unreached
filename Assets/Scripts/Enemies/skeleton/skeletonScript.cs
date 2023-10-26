@@ -102,13 +102,27 @@ public class SkeletonScript : MonoBehaviour
             }
         }
 
+
         // get current target position
         Vector2 t_CurrentTargetPos = currentTarget.transform.position;
         if (Vector2.Distance(transform.position, t_CurrentTargetPos) > 2 && currentState != State.Shielded && currentState != State.Attack)
         {
             Vector2 direction = (t_CurrentTargetPos - (Vector2)transform.position).normalized;
             rb.AddForce(direction * speed - rb.velocity, ForceMode2D.Force);
-            //animator.SetBool("IsWalking", true);
+
+            RaycastHit2D ground = Physics2D.Raycast(transform.position, Vector2.down, raycastDistance, LayerMask.GetMask("Ground"));
+
+            if (ground.collider == null)
+            {
+                // If there is no ground, fall
+                Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.green);
+                rb.velocity = new Vector2(0, -speed*2);
+                // If that works that works ok?!
+            }
+            else
+            {
+                Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.red);
+            }
         }
         else if (isPlayerNoticed)
         {

@@ -221,18 +221,18 @@ public class PlayerController : MonoBehaviour
         m_Animator.SetFloat("Speed", Mathf.Abs(t_MoveX));
 
         float t_Force = t_MoveX * RunSpeed;
-        if (Mathf.Abs(t_Force) > RunSpeed) // if the force is greater than the walk speed, clamp it
+        if (Mathf.Abs(t_Force) > WalkSpeed) // if the force is greater than the walk speed, clamp it
             t_Force = WalkSpeed * Mathf.Sign(t_Force);
         //Debug.Log("Force: " + t_Force);
 
         if (isSlidingOnIce && !m_UserJump && !m_IsJumping)
-            m_Rigidbody2D.AddForce(new Vector2(t_Force*1.1f, 0), ForceMode2D.Force);
+            m_Rigidbody2D.AddForce(new Vector2(t_Force*1f, 0), ForceMode2D.Force);
         else if (!m_IsSliding && !m_IsAttacking && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (RunSpeed), m_Rigidbody2D.velocity.y);
         else if (!m_IsSliding && m_IsGrounded && !m_IsDashing && !m_IsGettingKnockback && m_IsAttacking)
             m_Rigidbody2D.velocity = new Vector2(t_MoveX * (WalkSpeed), m_Rigidbody2D.velocity.y);
         else if (!m_IsSliding && !m_IsAttacking && !m_IsDashing && !m_IsGettingKnockback && !m_IsGrounded)
-            m_Rigidbody2D.AddForce(new Vector2(t_Force, 0), ForceMode2D.Force);
+            m_Rigidbody2D.AddForce(new Vector2(t_Force*2, 0), ForceMode2D.Force);
 
         // Ground detection
         bool t_previousGrounded = m_IsGrounded;
@@ -257,7 +257,7 @@ public class PlayerController : MonoBehaviour
             m_EdgeGrab = true;
             m_Rigidbody2D.velocity = Vector2.zero;
         }
-        else if (t_WallRCollider != null && !t_WallRCollider.gameObject.CompareTag("MovingPlatform") && !m_IsSliding && !m_UserJump && !m_IsJumping && !m_IsSliding && !m_IsGrounded)
+        else if (t_WallRCollider != null && !t_WallRCollider.gameObject.CompareTag("MovingPlatform") && !m_IsSliding && !m_UserJump && !m_IsJumping && !m_IsSliding && !m_IsGrounded && !t_IsCeilingRide)
         {
             Debug.Log("EdgeGrabR");
             m_EdgeGrab = true;

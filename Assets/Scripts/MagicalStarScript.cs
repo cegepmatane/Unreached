@@ -41,14 +41,21 @@ public class MagicalStarScript : MonoBehaviour
 
             // If an enemy is in the original size of the star, deal damage
             // Spawn a bunch of raycasts in a circle
-            if (!hasExploded) {
+            if (!hasExploded)
+            {
+                int maxHits = 10;
+                RaycastHit2D[] hitResults = new RaycastHit2D[maxHits];
+
                 for (int i = 0; i < 360; i += 10)
                 {
                     float t_RaycastSize = originalSize * 0.8f;
-                    RaycastHit2D hit = Physics2D.Raycast(transform.position, Quaternion.Euler(0, 0, i) * Vector2.up, t_RaycastSize, LayerMask.GetMask("Enemies"));
-                    if (hit.collider != null)
+                    Vector2 direction = Quaternion.Euler(0, 0, i) * Vector2.up;
+                    int numberOfHits = Physics2D.RaycastNonAlloc(transform.position, direction, hitResults, t_RaycastSize, LayerMask.GetMask("Enemies"));
+
+                    for (int j = 0; j < numberOfHits; j++)
                     {
-                        Debug.DrawRay(transform.position, Quaternion.Euler(0, 0, i) * Vector2.up * t_RaycastSize, Color.red, 5f);
+                        RaycastHit2D hit = hitResults[j];
+                        Debug.DrawRay(transform.position, direction * t_RaycastSize, Color.red, 5f);
                         try
                         {
                             hit.collider.GetComponent<SkeletonScript>().TakeDamage(damages);
@@ -57,13 +64,9 @@ public class MagicalStarScript : MonoBehaviour
                         {
                         }
                     }
-                    else
-                    {
-                        Debug.DrawRay(transform.position, Quaternion.Euler(0, 0, i) * Vector2.up * t_RaycastSize, Color.green, 5f);
-                    }
                 }
+                hasExploded = true;
             }
-            hasExploded = true;
         }
 
         // Decrease size using an inverse function and sync with Time.deltaTime

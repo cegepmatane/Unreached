@@ -20,8 +20,6 @@ public class MagicScript : MonoBehaviour
         originalPos = transform.position;
         spriteRenderer = GetComponent<SpriteRenderer>();
         spriteRenderer.color = new Color(1, 1, 1, 0);
-        // Scale bonus based on value
-        transform.localScale = new Vector3(transform.localScale.x * (value / 20), transform.localScale.y * (value / 20), transform.localScale.z * (value / 20));
         // Move magic to the ground
         transform.position = new Vector2(transform.position.x, transform.position.y - 3);
     }
