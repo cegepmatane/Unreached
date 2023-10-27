@@ -33,10 +33,12 @@ public class PlayerController : MonoBehaviour
     public float randomDirectionRange = 30f; // Range of random deviation in degrees
     public float randomForceMultiplier = 0.5f; // Range of random deviation in force
 
-    public GameObject MagicalStarPrefab;
-    public GameObject PlayerBlur;
-    public GameObject PlayerTrail;
-    public GameObject bloodSplashPrefab;
+    [SerializeField] private GameObject MagicalStarPrefab;
+    [SerializeField] private GameObject PlayerBlur;
+    [SerializeField] private GameObject PlayerTrail;
+    [SerializeField] private GameObject bloodSplashPrefab;
+    [SerializeField] private GameObject MagicEffects;
+
 
     private bool m_UserJump = false;
     private bool m_UserMagicalAbility = false;
@@ -130,7 +132,7 @@ public class PlayerController : MonoBehaviour
 
 
         // Attack input
-        if ((Input.GetButtonDown("Fire1") || m_UserStoredAttack) && !m_IsSliding && !m_IsAttacking && !m_EdgeGrab && !m_AttackCombo && !m_IsGettingKnockback) { // if the player is not sliding and is not attacking
+        if ((Input.GetButtonDown("Fire1") || m_UserStoredAttack) && !m_IsSliding && !m_IsAttacking && !m_EdgeGrab && !m_AttackCombo && !m_IsGettingKnockback && !m_IsDashing) { // if the player is not sliding and is not attacking
             Debug.Log("Attack");
             m_Animator.SetTrigger("Attack");
             m_Animator.SetBool("IsNotACombo", false);
@@ -153,8 +155,12 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Fire2") && Magic >= 95) // if the player has enough magic
         {
             Debug.Log("MagicalAbility");
+            // Particle effect
+            GameObject t_MagicEffects = Instantiate(MagicEffects, transform.position, Quaternion.identity);
+
+            Destroy(t_MagicEffects, 4f);
             m_UserMagicalAbility = true;
-            Magic = 100;
+            Magic = 0;
         }
 
 
@@ -202,6 +208,7 @@ public class PlayerController : MonoBehaviour
     {
         m_StatusManager.GetComponent<StatusManager>().setMagic(Magic);
         m_StatusManager.GetComponent<StatusManager>().setHealth(Health);
+        m_StatusManager.GetComponent<StatusManager>().setKills(Kills);
 
         if (m_IsDashing)
             MotionBlur();
@@ -493,17 +500,12 @@ public class PlayerController : MonoBehaviour
             this.gameObject.GetComponent<PlayerController>().enabled = false;
             
         }
-        else
-        {
-            m_Animator.SetTrigger("TakeDamage");
-            // Take a little knockback
-        }
-
         // Calculate the hit direction
         Vector2 hitDirection = transform.position - (Vector3)hitPosition;
 
         m_Rigidbody2D.AddForce(hitDirection.normalized * 7, ForceMode2D.Impulse);
         m_IsGettingKnockback = true;
+        m_Animator.SetTrigger("TakeDamage");
         Debug.Log("m_IsGettingKnockback = true");
         BloodSplatterEffect(hitDirection);
     }

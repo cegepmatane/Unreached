@@ -65,6 +65,7 @@ public class MenuGameOver : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         activateFadeMainMenu = true;
         m_MainMenuButton.SetActive(true);
+        Time.timeScale = 0;
     }
 
     public void RestartLevel()

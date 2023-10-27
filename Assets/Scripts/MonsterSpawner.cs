@@ -29,19 +29,20 @@ public class MonsterSpawner : MonoBehaviour
     {
         m_TimeSinceLastSpawn += Time.deltaTime;
 
-        GameObject[] listOfAllEnnemies = GameObject.FindObjectsOfType<GameObject>();
+        GameObject[] listOfAllEnnemies = GameObject.FindGameObjectsWithTag("Enemy");
         int numberOfCloseEnnemies = 0;
 
         foreach (GameObject ennemy in listOfAllEnnemies)
         {
             // If the enemy is closer than twice the distance from the player until spawn, count it
-            if (Vector3.Distance(ennemy.transform.position, transform.position) < 2 * DistanceFromPlayerUntilSpawn)
+            if (Vector3.Distance(ennemy.transform.position, transform.position) < DistanceFromPlayerUntilSpawn)
             {
                 numberOfCloseEnnemies++;
             }
         } 
+        Debug.Log(numberOfCloseEnnemies);
 
-        if (m_TimeSinceLastSpawn > TimeBetweenSpawns && numberOfCloseEnnemies < MaxNumberOfMonstersAlive)
+        if (m_TimeSinceLastSpawn > TimeBetweenSpawns)
         {
             m_TimeSinceLastSpawn = 0;
             if (IsPlayerInReach())
@@ -67,10 +68,10 @@ public class MonsterSpawner : MonoBehaviour
         {
             float angle = Random.Range(0, 2 * Mathf.PI);
             Vector3 spawnPosition = transform.position + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * 2;
-            // if lower than the ground, spawn on the ground
-            if (spawnPosition.y < 0)
+            // if lower than the position of the spawner, put it at the same height
+            if (spawnPosition.y < transform.position.y + 5)
             {
-                spawnPosition.y = 0;
+                spawnPosition.y = transform.position.y + 5;
             }
             Instantiate(MonsterPrefab, spawnPosition, Quaternion.identity);
         }

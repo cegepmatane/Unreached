@@ -23,7 +23,7 @@ public class SkeletonScript : MonoBehaviour
     public float randomDirectionRange = 30;
     public float randomForceMultiplier = 0.5f;
 
-    private bool hasJustLostALife = false;
+    public bool hasJustLostALife = false;
     private int storedHealth;
     private float randomScale;
 
@@ -67,6 +67,8 @@ public class SkeletonScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        DeathIfFall();
+
         if (currentState == State.Dead || currentState == State.Stuned || currentState == State.Attack || Time.timeScale < 1)
         {
             return;
@@ -189,10 +191,22 @@ public class SkeletonScript : MonoBehaviour
         }
     }
 
+    public void DeathIfFall()
+    {
+        if (transform.position.y < -10)
+        {
+            TakeDamage(999999);
+        }   
+    }
+
     public void TakeDamage(int damage)
     {
         if (currentState == State.Dead)
             return;
+
+        if (damage > storedHealth*2)
+            Explode();
+       
 
         Vector2 attackerPosition = GameObject.FindGameObjectWithTag("Player").transform.position;
         Vector2 knockbackDirection = (transform.position - (Vector3)attackerPosition).normalized;
@@ -204,7 +218,7 @@ public class SkeletonScript : MonoBehaviour
         if (health <= 0)
         {
             animator.SetBool("IsDead", true);
-            StartCoroutine(TakeDamageBuffer());
+            //StartCoroutine(TakeDamageBuffer());
 
             //Coroutine to revive after 5 seconds
             Debug.Log("Lifes: " + lifes + " Damage: " + damage + " StoredHealth: " + storedHealth);
@@ -213,26 +227,11 @@ public class SkeletonScript : MonoBehaviour
                 lifes--;
                 hasJustLostALife = true;
                 StartCoroutine(Revive());
+                currentState = State.Dead;
             }
             else if (lifes <= 0 && !hasJustLostALife)
             {
-                currentState = State.Dead;
-                // Spawn skeleton parts
-                GameObject skeletonPartsInstance = Instantiate(skeletonParts, transform.position, Quaternion.identity);
-                // Apply the same scale to the skeleton parts
-                skeletonPartsInstance.transform.localScale = skeletonPartsInstance.transform.localScale * randomScale;
-                // Flip it the same way as the enemy
-                if (isFacingLeft)
-                {
-                    skeletonPartsInstance.transform.localScale = Vector3.Scale(skeletonPartsInstance.transform.localScale, new Vector3(-1, 1, 1));
-                }
-                // Destroy the skeleton parts after 5 seconds
-                Destroy(skeletonPartsInstance, 5f);
-                // Spawn magic after 2s
-                Instantiate(magicPrefab, transform.position, Quaternion.identity);
-                // Add +1 kill to the player
-                GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>().Kills++;
-                Destroy(gameObject);
+                Explode();
             }
         }
         else
@@ -241,16 +240,35 @@ public class SkeletonScript : MonoBehaviour
             Rigidbody2D rb = GetComponent<Rigidbody2D>();
             rb.AddForce(knockbackDirection * getKnockedBack, ForceMode2D.Impulse);
             // state stuned
-            currentState = State.Stuned;
-            StartCoroutine(UnStund());
+
+            if (currentState != State.Dead)
+            {
+                currentState = State.Stuned;
+                StartCoroutine(UnStund());
+            }
         }
         BloodSplatterEffect(knockbackDirection);
     }
 
-    public IEnumerator TakeDamageBuffer()
+    public void Explode()
     {
-        yield return new WaitForSeconds(takeDamageBuffer);
         currentState = State.Dead;
+        // Spawn skeleton parts
+        GameObject skeletonPartsInstance = Instantiate(skeletonParts, transform.position, Quaternion.identity);
+        // Apply the same scale to the skeleton parts
+        skeletonPartsInstance.transform.localScale = skeletonPartsInstance.transform.localScale * randomScale;
+        // Flip it the same way as the enemy
+        if (isFacingLeft)
+        {
+            skeletonPartsInstance.transform.localScale = Vector3.Scale(skeletonPartsInstance.transform.localScale, new Vector3(-1, 1, 1));
+        }
+        // Destroy the skeleton parts after 5 seconds
+        Destroy(skeletonPartsInstance, 5f);
+        // Spawn magic after 2s
+        Instantiate(magicPrefab, transform.position, Quaternion.identity);
+        // Add +1 kill to the player
+        GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>().Kills++;
+        Destroy(gameObject);
     }
 
     public void BloodSplatterEffect(Vector2 hitDirection)
@@ -289,9 +307,8 @@ public class SkeletonScript : MonoBehaviour
     IEnumerator UnStund()
     {
         yield return new WaitForSeconds(0.5f);
-        if (currentState == State.Dead)
-            yield break;
-        currentState = State.Idle;
+        if (currentState == State.Stuned)
+            currentState = State.Idle;
     }
 
     IEnumerator Revive()

@@ -18,9 +18,9 @@ public class Menu : MonoBehaviour
     public void Play()
     {
         Debug.Log("Play");
-        SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
         this.gameObject.SetActive(false);
-        // SceneManager.LoadScene("niveau_01", LoadSceneMode.Single);
+        SceneManager.LoadScene("niveau_0", LoadSceneMode.Single);
+        // SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
     }
     public void Exit()
     {
