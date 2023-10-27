@@ -19,7 +19,7 @@ public class Menu : MonoBehaviour
     {
         Debug.Log("Play");
         this.gameObject.SetActive(false);
-        SceneManager.LoadScene("niveau_0", LoadSceneMode.Single);
+        SceneManager.LoadScene("level_0", LoadSceneMode.Single);
         // SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
     }
     public void Exit()
