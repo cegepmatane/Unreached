@@ -1,6 +1,8 @@
 # Unreached
 A simple 2D plateformer
 
+<video src='[your URL here](https://github.com/cegepmatane/Unreached/blob/main/Vid%C3%A9o/Unreached.mp4)' width=180/>
+
 # Game By
 Noah Nicolas
 
