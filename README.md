@@ -1,7 +1,7 @@
 # Unreached
 A simple 2D plateformer made in a month
 
-[![Trailer](https://img.youtube.com/vi/A9A9iZ6jvE4/0.jpg)](https://youtu.be/A9A9iZ6jvE4)
+https://github.com/cegepmatane/Unreached/assets/53911681/80b1957e-a4f4-44bb-99cb-6f59a0b65c30
 
 # Game By
 Noah Nicolas
